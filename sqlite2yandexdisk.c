@@ -188,7 +188,6 @@ sqlite2yandexdisk_upload(
 
 	//free memory
 	free(value);
-	cJSON * element;
 
 	//delete JSON
 	cJSON_Delete(json);
