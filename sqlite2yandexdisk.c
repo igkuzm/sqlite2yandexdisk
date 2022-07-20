@@ -2,7 +2,7 @@
  * File              : sqlite2yandexdisk.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 03.05.2022
- * Last Modified Date: 19.07.2022
+ * Last Modified Date: 20.07.2022
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -11,12 +11,12 @@
 #include <string.h>
 #include <time.h>
 
-#include "klib/array.h"
-#include "cJSON.h"
 #include "sqlite2yandexdisk.h"
-#include "cYandexDisk/cYandexDisk.h"
 #include "SQLiteConnect/SQLiteConnect.h"
-#include "klib/alloc.h"
+#include "cYandexDisk/cJSON.h"
+#include "cYandexDisk/cYandexDisk.h"
+#include "cYandexDisk/klib/array.h"
+#include "cYandexDisk/klib/alloc.h"
 
 #define STR(...)\
 	({char ___str[BUFSIZ]; snprintf(___str, BUFSIZ-1, __VA_ARGS__); ___str[BUFSIZ-1] = 0; ___str;})
