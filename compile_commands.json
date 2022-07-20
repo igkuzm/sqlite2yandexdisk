@@ -1,0 +1,8 @@
+[
+  {
+    "directory": "/",
+    "command": "clang -std=c++17 -I. -I/opt/homebrew/Cellar/qt/6.1.3/lib/QtWidgets.framework/Headers -I/opt/homebrew/Cellar/qt/6.1.3/lib/QtGui.framework/Headers -I/opt/homebrew/Cellar/qt/6.1.3/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk/System/Library/Frameworks/AGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX11.3.sdk/System/Library/Frameworks/AGL.framework/Headers -I/opt/homebrew/Cellar/qt/6.1.3/share/qt/mkspecs/macx-clang -I/opt/homebrew/include/QtWidgets  -I/opt/homebrew/include/QtCore  -I/opt/homebrew/include/QtGui -F/opt/homebrew/Cellar/qt/6.1.3/lib -F/opt/homebrew/lib -framework QtCore -framework QtGui  -framework QtWidgets -framework QtButton -IOpenXLSX/OpenXLSX -IOpenXLSX/OpenXLSX/headers",
+    "file": "main.cpp",
+    "output": "/"
+  }
+]

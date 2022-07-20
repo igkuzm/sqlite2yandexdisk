@@ -1,0 +1,9 @@
+[submodule "cYandexDisk"]
+	path = cYandexDisk
+	url = https://github.com/igkuzm/cYandexDisk
+[submodule "SQLiteConnect"]
+	path = SQLiteConnect
+	url = https://github.com/igkuzm/SQLiteConnect
+[submodule "klib"]
+	path = klib
+	url = https://github.com/igkuzm/klib
