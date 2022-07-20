@@ -278,9 +278,15 @@ sqlite2yandexdisk_update_from_cloud(
 
 	if (rebase_with_timestamp) {
 		max = timestamp;
+		ARRAY_FREE(timestamps);
 	} else {
-		ARRAY_FOR_EACH(timestamps, time_t, _timestamp)
-			if (_timestamp > max) max = _timestamp;
+		int i;
+		for (i = 0; i < ARRAY_SIZE(timestamps, time_t); ++i) {
+			time_t _t = timestamps[i];	
+			if (_t > max) max = _t;
+		}
+		/*ARRAY_FOR_EACH(timestamps, time_t, _timestamp)*/
+			/*if (_timestamp > max) max = _timestamp;*/
 
 		//free array
 		ARRAY_FREE(timestamps);
