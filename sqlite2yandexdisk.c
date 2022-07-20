@@ -2,7 +2,7 @@
  * File              : sqlite2yandexdisk.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 03.05.2022
- * Last Modified Date: 20.07.2022
+ * Last Modified Date: 21.07.2022
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -189,9 +189,6 @@ sqlite2yandexdisk_upload(
 	//free memory
 	free(value);
 	cJSON * element;
-	cJSON_ArrayForEach(element, json){
-		cJSON_Delete(element);
-	}	
 
 	//delete JSON
 	cJSON_Delete(json);
@@ -337,9 +334,6 @@ sqlite2yandexdisk_update_from_cloud(
 				tablename, key, value, uuid		
 		);
 		sqlite_connect_execute(SQL, database);
-
-		//delete item
-		cJSON_Delete(item);
 	}
 
 	//delete JSON
