@@ -238,14 +238,17 @@ int list_of_data_callback(c_yd_file_t *file, void *user_data, char *error){
 	return 0;
 }
 
-struct sqlite2yandexdisk_yandexdisk2json_callback_data {
-	cJSON * json;
+struct sqlite2yandexdisk_update_from_cloud_data {
 	void * user_data;
 	int (*callback)(size_t size, void *user_data, char *error);			
+	time_t timestamp;
+	char * tablename;
+	char * uuid;
+	char * database;
 };
 
-int sqlite2yandexdisk_yandexdisk2json_callback(size_t size, void *data, void *user_data, char *error){			
-	struct sqlite2yandexdisk_yandexdisk2json_callback_data *d = user_data;
+int sqlite2yandexdisk_update_from_cloud_callback(size_t size, void *data, void *user_data, char *error){			
+	struct sqlite2yandexdisk_update_from_cloud_data *d = user_data;
 	
 	if (error)
 		if(d->callback)
@@ -253,14 +256,45 @@ int sqlite2yandexdisk_yandexdisk2json_callback(size_t size, void *data, void *us
 	
 	if (size){
 		const char *err;
-		d->json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
+		cJSON * json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
 		
 		if (err)
 			if(d->callback)
-				d->callback(0, d->user_data, STR("%s", err));
+				d->callback(0, d->user_data, STR("%s", err));		
+
+		//check json
+		if (json == NULL || !cJSON_IsObject(json)){
+			if (d->callback)
+				d->callback(0, user_data, STR("can't get json from timestamp: %ld for %s: %s", d->timestamp, d->tablename, d->uuid));
+			return 1;
+		}
+
+		cJSON * item  = cJSON_GetArrayItem(json, 0);
+		
+		char  * key   = item->string;
+		char  * value = cJSON_GetStringValue(item);
+
+		size_t size = strlen(value);
+		char * SQL  = MALLOC(BUFSIZ + size);	
+		snprintf(SQL,
+				size,
+				"INSERT INTO %s (uuid) "
+				"SELECT '%s' "
+				"WHERE NOT EXISTS (SELECT 1 FROM %s WHERE uuid = '%s'); "
+				"UPDATE %s SET '%s' = '%s' WHERE uuid = '%s'"
+				,
+				d->tablename, 
+				d->uuid,
+				d->tablename, d->uuid,
+				d->tablename, key, value, d->uuid		
+		);
+		sqlite_connect_execute(SQL, d->database);
+
+		//delete JSON
+		cJSON_Delete(json);
 	}
 
-	return 1; //stop execution
+	return 0;
 }
 		
 void
@@ -324,47 +358,15 @@ sqlite2yandexdisk_update_from_cloud(
 		}
 	}
 
-	//download json for max time 
-	struct sqlite2yandexdisk_yandexdisk2json_callback_data d = {
+	//download json for max time and update SQLite 
+	struct sqlite2yandexdisk_update_from_cloud_data d = {
 		.callback = callback,
 		.user_data = user_data,
-		.json = NULL
+		.database = database,
+		.tablename = tablename,
+		.timestamp = max,
+		.uuid = uuid
 	};
 	char key[BUFSIZ]; sprintf(key, "%ld", max);
-	sqlite2yandexdisk_download_value_for_key(token, path, tablename, uuid, key, &d, sqlite2yandexdisk_yandexdisk2json_callback);
-
-	//check json
-	if (d.json == NULL || !cJSON_IsObject(d.json)){
-		if (callback)
-			callback(0, user_data, STR("can't get json from timestamp: %ld for %s: %s", max, tablename, uuid));
-		return;
-	}
-
-	//for each object in json
-	cJSON * element;
-	cJSON_ArrayForEach(element, d.json){
-		cJSON * item  = cJSON_GetArrayItem(element, 0);
-		
-		char  * key   = item->string;
-		char  * value = cJSON_GetStringValue(item);
-
-		size_t size = strlen(value);
-		char * SQL  = MALLOC(BUFSIZ + size);	
-		snprintf(SQL,
-				size,
-				"INSERT INTO %s (uuid) "
-				"SELECT '%s' "
-				"WHERE NOT EXISTS (SELECT 1 FROM %s WHERE uuid = '%s'); "
-				"UPDATE %s SET '%s' = '%s' WHERE uuid = '%s'"
-				,
-				tablename, 
-				uuid,
-				tablename, uuid,
-				tablename, key, value, uuid		
-		);
-		sqlite_connect_execute(SQL, database);
-	}
-
-	//delete JSON
-	cJSON_Delete(d.json);
+	sqlite2yandexdisk_download_value_for_key(token, path, tablename, uuid, key, &d, sqlite2yandexdisk_update_from_cloud_callback);
 }
