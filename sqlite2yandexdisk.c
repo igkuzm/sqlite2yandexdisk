@@ -235,7 +235,7 @@ int list_of_data_callback(c_yd_file_t *file, void *user_data, char *error){
 }
 
 struct sqlite2yandexdisk_yandexdisk2json_callback_data {
-	cJSON ** json;
+	cJSON * json;
 	void * user_data;
 	int (*callback)(size_t size, void *user_data, char *error);			
 };
@@ -248,9 +248,9 @@ int sqlite2yandexdisk_yandexdisk2json_callback(size_t size, void *data, void *us
 			d->callback(0, d->user_data, STR("%s", error));
 	
 	const char *err;
-	*d->json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
+	d->json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
 	
-	if (*d->json == NULL)
+	if (d->json == NULL)
 		if (err)
 			if(d->callback)
 				d->callback(0, d->user_data, STR("%s", err));
@@ -320,9 +320,7 @@ sqlite2yandexdisk_update_from_cloud(
 	}
 
 	//download json for max time 
-	cJSON * json = NULL;
 	struct sqlite2yandexdisk_yandexdisk2json_callback_data d = {
-		.json = &json,
 		.callback = callback,
 		.user_data = user_data
 	};
@@ -332,7 +330,7 @@ sqlite2yandexdisk_update_from_cloud(
 	sqlite2yandexdisk_download_value_for_key(token, filepath, tablename, uuid, key, &d, sqlite2yandexdisk_yandexdisk2json_callback);
 
 	//check json
-	if (json == NULL || !cJSON_IsObject(json)){
+	if (d.json == NULL || !cJSON_IsObject(d.json)){
 		if (callback)
 			callback(0, user_data, STR("can't get json from timestamp: %ld for %s: %s", max, tablename, uuid));
 		return;
@@ -340,7 +338,7 @@ sqlite2yandexdisk_update_from_cloud(
 
 	//for each object in json
 	cJSON * element;
-	cJSON_ArrayForEach(element, json){
+	cJSON_ArrayForEach(element, d.json){
 		cJSON * item  = cJSON_GetArrayItem(element, 0);
 		
 		char  * key   = item->string;
@@ -364,5 +362,5 @@ sqlite2yandexdisk_update_from_cloud(
 	}
 
 	//delete JSON
-	cJSON_Delete(json);
+	cJSON_Delete(d.json);
 }
