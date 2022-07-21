@@ -95,6 +95,7 @@ sqlite2yandexdisk_upload_value_for_key(
 			size, 
 			keypath, 
 			true,
+			false,
 			user_data, 
 			callback, 
 			NULL, 
@@ -121,9 +122,12 @@ sqlite2yandexdisk_download_value_for_key(
 	char keypath[BUFSIZ];
 	sprintf(keypath, "app:/%s/%s/%s/%s", path, tablename, identifier, key);	
 
+	printf("YandexDisk dowload path: %s, token: %s\n", keypath, token);
+
 	c_yandex_disk_download_data(
 			token,	
-			path, 
+			keypath, 
+			true,
 			user_data, 
 			callback, 
 			NULL, 
@@ -247,13 +251,14 @@ int sqlite2yandexdisk_yandexdisk2json_callback(size_t size, void *data, void *us
 		if(d->callback)
 			d->callback(0, d->user_data, STR("%s", error));
 	
-	const char *err;
-	d->json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
-	
-	if (d->json == NULL)
+	if (size){
+		const char *err;
+		d->json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
+		
 		if (err)
 			if(d->callback)
 				d->callback(0, d->user_data, STR("%s", err));
+	}
 
 	return 1; //stop execution
 }
@@ -322,12 +327,11 @@ sqlite2yandexdisk_update_from_cloud(
 	//download json for max time 
 	struct sqlite2yandexdisk_yandexdisk2json_callback_data d = {
 		.callback = callback,
-		.user_data = user_data
+		.user_data = user_data,
+		.json = NULL
 	};
 	char key[BUFSIZ]; sprintf(key, "%ld", max);
-	char filepath[BUFSIZ];
-	sprintf(filepath, "%s/%ld", rowpath, max);
-	sqlite2yandexdisk_download_value_for_key(token, filepath, tablename, uuid, key, &d, sqlite2yandexdisk_yandexdisk2json_callback);
+	sqlite2yandexdisk_download_value_for_key(token, path, tablename, uuid, key, &d, sqlite2yandexdisk_yandexdisk2json_callback);
 
 	//check json
 	if (d.json == NULL || !cJSON_IsObject(d.json)){
