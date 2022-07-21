@@ -2,7 +2,7 @@
  * File              : sqlite2yandexdisk.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 03.05.2022
- * Last Modified Date: 21.07.2022
+ * Last Modified Date: 22.07.2022
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -248,6 +248,7 @@ struct sqlite2yandexdisk_update_from_cloud_data {
 };
 
 int sqlite2yandexdisk_update_from_cloud_callback(size_t size, void *data, void *user_data, char *error){			
+	printf("start sqlite2yandexdisk_update_from_cloud_callback\n");
 	struct sqlite2yandexdisk_update_from_cloud_data *d = user_data;
 	
 	if (error)
@@ -359,14 +360,13 @@ sqlite2yandexdisk_update_from_cloud(
 	}
 
 	//download json for max time and update SQLite 
-	struct sqlite2yandexdisk_update_from_cloud_data d = {
-		.callback = callback,
-		.user_data = user_data,
-		.database = database,
-		.tablename = tablename,
-		.timestamp = max,
-		.uuid = uuid
-	};
+	struct sqlite2yandexdisk_update_from_cloud_data * d = NEW(struct sqlite2yandexdisk_update_from_cloud_data);
+	d->callback = callback;
+	d->user_data = user_data;
+	strcpy(d->database,database);
+	strcpy(d->tablename, tablename);
+	d->timestamp = max;
+	strcpy(d->uuid, uuid);
 	char key[BUFSIZ]; sprintf(key, "%ld", max);
-	sqlite2yandexdisk_download_value_for_key(token, path, tablename, uuid, key, &d, sqlite2yandexdisk_update_from_cloud_callback);
+	sqlite2yandexdisk_download_value_for_key(token, path, tablename, uuid, key, d, sqlite2yandexdisk_update_from_cloud_callback);
 }
