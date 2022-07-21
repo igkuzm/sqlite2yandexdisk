@@ -15,7 +15,6 @@
 #include "SQLiteConnect/SQLiteConnect.h"
 #include "cYandexDisk/cJSON.h"
 #include "cYandexDisk/cYandexDisk.h"
-#include "cYandexDisk/klib/array.h"
 #include "cYandexDisk/klib/alloc.h"
 
 #define STR(...)\
@@ -193,9 +192,33 @@ sqlite2yandexdisk_upload(
 	cJSON_Delete(json);
 }
 
+struct timestamp_array {
+	time_t * data;
+	int len;
+};
+
+void timestamp_array_init(struct timestamp_array * array){
+	array->data = malloc(sizeof(time_t));
+	if (array->data == NULL){
+		perror("malloc timestamp_array");
+		exit(EXIT_FAILURE);
+	}
+	array->len = 0;
+}
+
+void timestamp_array_append(struct timestamp_array * array, time_t item){
+	array->data[array->len] = item;
+	array->len++;
+	array->data = realloc(array->data, sizeof(time_t) + array->len * sizeof(time_t));
+	if (array->data == NULL){
+		perror("malloc timestamp_array");
+		exit(EXIT_FAILURE);
+	}	
+}
+
 struct list_of_data_callback_data{
-	void *user_data;
-	time_t * timestamps;
+	void * user_data;
+	struct timestamp_array * timestamps;
 	int (*callback)(size_t size, void *user_data, char *error);			
 };
 
@@ -206,7 +229,7 @@ int list_of_data_callback(c_yd_file_t *file, void *user_data, char *error){
 			d->callback(0, d->user_data, STR("%s", error));
 	
 	time_t timestamp = atol(file->name);
-	ARRAY_APPEND(d->timestamps, time_t, timestamp);
+	timestamp_array_append(d->timestamps, timestamp);
 
 	return 0;
 }
@@ -256,9 +279,10 @@ sqlite2yandexdisk_update_from_cloud(
 	char rowpath[BUFSIZ];
 	sprintf(rowpath, "app:/%s/%s/%s", path, tablename, uuid);
 
-	time_t * timestamps = ARRAY_NEW(time_t);
+	struct timestamp_array timestamps;
+	timestamp_array_init(&timestamps);
 	struct list_of_data_callback_data t = {
-		.timestamps = timestamps,
+		.timestamps = &timestamps,
 		.user_data = user_data,
 		.callback = callback
 	};
@@ -266,10 +290,10 @@ sqlite2yandexdisk_update_from_cloud(
 	c_yandex_disk_ls(token, rowpath, &t, list_of_data_callback);
 
 	//check list
-	if (ARRAY_SIZE(timestamps, time_t) < 1) {
+	if (timestamps.len < 1) {
 		if (callback)
 			callback(0, user_data, STR("can't get list of saved data for %s: %s", tablename, uuid));
-		ARRAY_FREE(timestamps);
+		free(timestamps.data);
 		return;
 	}
 
@@ -278,18 +302,14 @@ sqlite2yandexdisk_update_from_cloud(
 
 	if (rebase_with_timestamp) {
 		max = timestamp;
-		ARRAY_FREE(timestamps);
+		free(timestamps.data);
 	} else {
 		int i;
-		for (i = 0; i < ARRAY_SIZE(timestamps, time_t); ++i) {
-			time_t _t = timestamps[i];	
+		for (i = 0; i < timestamps.len; ++i) {
+			time_t _t = timestamps.data[i];	
 			if (_t > max) max = _t;
 		}
-		/*ARRAY_FOR_EACH(timestamps, time_t, _timestamp)*/
-			/*if (_timestamp > max) max = _timestamp;*/
-
-		//free array
-		ARRAY_FREE(timestamps);
+		free(timestamps.data);
 
 		//check if need to update
 		if (timestamp > max) {
