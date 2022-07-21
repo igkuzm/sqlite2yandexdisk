@@ -328,7 +328,7 @@ sqlite2yandexdisk_update_from_cloud(
 	};
 	char key[BUFSIZ]; sprintf(key, "%ld", max);
 	char filepath[BUFSIZ];
-	sprintf(filepath, "%s/%ld", rowpath, timestamp);
+	sprintf(filepath, "%s/%ld", rowpath, max);
 	sqlite2yandexdisk_download_value_for_key(token, filepath, tablename, uuid, key, &d, sqlite2yandexdisk_yandexdisk2json_callback);
 
 	//check json
