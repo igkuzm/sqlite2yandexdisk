@@ -242,9 +242,9 @@ struct sqlite2yandexdisk_update_from_cloud_data {
 	void * user_data;
 	int (*callback)(size_t size, void *user_data, char *error);			
 	time_t timestamp;
-	char * tablename;
-	char * uuid;
-	char * database;
+	const char * tablename;
+	const char * uuid;
+	const char * database;
 };
 
 int sqlite2yandexdisk_update_from_cloud_callback(size_t size, void *data, void *user_data, char *error){			
@@ -363,10 +363,13 @@ sqlite2yandexdisk_update_from_cloud(
 	struct sqlite2yandexdisk_update_from_cloud_data * d = NEW(struct sqlite2yandexdisk_update_from_cloud_data);
 	d->callback = callback;
 	d->user_data = user_data;
-	strcpy(d->database,database);
-	strcpy(d->tablename, tablename);
 	d->timestamp = max;
-	strcpy(d->uuid, uuid);
+	d->database = database;
+	d->tablename = tablename;
+	d->uuid = uuid;
+	/*strcpy(d->database,database);*/
+	/*strcpy(d->tablename, tablename);*/
+	/*strcpy(d->uuid, uuid);*/
 	char key[BUFSIZ]; sprintf(key, "%ld", max);
 	sqlite2yandexdisk_download_value_for_key(token, path, tablename, uuid, key, d, sqlite2yandexdisk_update_from_cloud_callback);
 }
