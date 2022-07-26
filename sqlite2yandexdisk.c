@@ -58,8 +58,27 @@ sqlite2yandexdisk_create_directories(
 	return 0;
 }
 
+struct upload_value_for_key_data {
+	void * value;
+	void *user_data;
+	int (*callback)(size_t size, void *user_data, char *error);
+};
+
+int upload_value_for_key_callback(size_t size, void *user_data, char *error){
+	//this is needed to free value and call callback
+	struct upload_value_for_key_data * d = user_data;
+	d->callback(size, d->user_data, error);
+
+	if (!error) {
+		free(d->value);
+		free(d);
+	}
+
+	return 0;
+}
+
 void
-sqlite2yandexdisk_upload_value_for_key(
+upload_value_for_key(
 		const char * token,
 		const char * path,
 		const char * tablename,
@@ -87,6 +106,11 @@ sqlite2yandexdisk_upload_value_for_key(
 	}	
 
 	//upload data for key
+	struct upload_value_for_key_data * d = NEW(struct upload_value_for_key_data);
+	d->value = value;
+	d->user_data = user_data;
+	d->callback = callback;
+
 	char keypath[BUFSIZ];
 	sprintf(keypath, "%s/%s", rowpath, key);
 	c_yandex_disk_upload_data(
@@ -96,8 +120,8 @@ sqlite2yandexdisk_upload_value_for_key(
 			keypath, 
 			true,
 			false,
-			user_data, 
-			callback, 
+			d, 
+			upload_value_for_key_callback, 
 			NULL, 
 			NULL
 			);
@@ -151,7 +175,6 @@ int sqlite2yandexdisk_sqlite2json_callback(void *data, int argc, char **argv, ch
 	return 1; //stop execution
 }
 
-
 void
 sqlite2yandexdisk_upload(
 		const char * token,
@@ -185,12 +208,11 @@ sqlite2yandexdisk_upload(
 	//save json to Yandex Disk
 	char * value = cJSON_Print(json);
 	size_t size = strlen(value);
+
+	printf("JSON TO SAVE: %s\n", value);
 	char key[16]; sprintf(key, "%ld", timestamp); //timestamp as key
 	
-	sqlite2yandexdisk_upload_value_for_key(token, path, tablename, uuid, value, size, key, user_data, callback);
-
-	//free memory
-	free(value);
+	upload_value_for_key(token, path, tablename, uuid, value, size, key, user_data, callback);
 
 	//delete JSON
 	cJSON_Delete(json);
