@@ -209,7 +209,6 @@ sqlite2yandexdisk_upload(
 	char * value = cJSON_Print(json);
 	size_t size = strlen(value);
 
-	printf("JSON TO SAVE: %s\n", value);
 	char key[16]; sprintf(key, "%ld", timestamp); //timestamp as key
 	
 	upload_value_for_key(token, path, tablename, uuid, value, size, key, user_data, callback);
@@ -260,7 +259,7 @@ int list_of_data_callback(c_yd_file_t *file, void *user_data, char *error){
 	return 0;
 }
 
-struct sqlite2yandexdisk_update_from_cloud_data {
+struct update_from_cloud_data {
 	void * user_data;
 	int (*callback)(size_t size, void *user_data, char *error);			
 	time_t timestamp;
@@ -269,24 +268,20 @@ struct sqlite2yandexdisk_update_from_cloud_data {
 	char database[BUFSIZ];
 };
 
-int sqlite2yandexdisk_update_from_cloud_callback(size_t size, void *data, void *user_data, char *error){			
-	printf("start sqlite2yandexdisk_update_from_cloud_callback\n");
-	struct sqlite2yandexdisk_update_from_cloud_data *d = user_data;
+int update_from_cloud_callback(size_t size, void *data, void *user_data, char *error){			
+	struct update_from_cloud_data *d = user_data;
 	
 	if (error)
 		if(d->callback)
 			d->callback(0, d->user_data, STR("%s", error));
 	
-	printf("SIZE: %ld\n", size);
-
 	if (size){
-		//const char *err;
-		//cJSON * json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
+		const char *err;
+		cJSON * json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
 		
-		//if (err)
-			//if(d->callback)
-				//d->callback(0, d->user_data, STR("cJSON_Parse error: %s", err));		
-		cJSON * json = cJSON_Parse((const char *)data);
+		if (err)
+			if(d->callback)
+				d->callback(0, d->user_data, STR("cJSON_Parse error: %s", err));		
 		
 		printf("JSON: %s\n", cJSON_Print(json));
 
@@ -392,7 +387,7 @@ sqlite2yandexdisk_update_from_cloud(
 	}
 
 	//download json for max time and update SQLite 
-	struct sqlite2yandexdisk_update_from_cloud_data * d = NEW(struct sqlite2yandexdisk_update_from_cloud_data);
+	struct update_from_cloud_data * d = NEW(struct update_from_cloud_data);
 	d->callback = callback;
 	d->user_data = user_data;
 	d->timestamp = max;
@@ -400,5 +395,5 @@ sqlite2yandexdisk_update_from_cloud(
 	strcpy(d->tablename, tablename);
 	strcpy(d->uuid, uuid);
 	char key[BUFSIZ]; sprintf(key, "%ld", max);
-	sqlite2yandexdisk_download_value_for_key(token, path, tablename, uuid, key, d, sqlite2yandexdisk_update_from_cloud_callback);
+	sqlite2yandexdisk_download_value_for_key(token, path, tablename, uuid, key, d, update_from_cloud_callback);
 }
