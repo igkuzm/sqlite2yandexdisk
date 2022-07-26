@@ -2,7 +2,7 @@
  * File              : sqlite2yandexdisk.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 03.05.2022
- * Last Modified Date: 22.07.2022
+ * Last Modified Date: 26.07.2022
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -255,20 +255,26 @@ int sqlite2yandexdisk_update_from_cloud_callback(size_t size, void *data, void *
 		if(d->callback)
 			d->callback(0, d->user_data, STR("%s", error));
 	
+	printf("SIZE: %ld\n", size);
+
 	if (size){
-		const char *err;
-		cJSON * json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
+		//const char *err;
+		//cJSON * json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
 		
-		if (err)
-			if(d->callback)
-				d->callback(0, d->user_data, STR("%s", err));		
+		//if (err)
+			//if(d->callback)
+				//d->callback(0, d->user_data, STR("cJSON_Parse error: %s", err));		
+		cJSON * json = cJSON_Parse((const char *)data);
+		
+		printf("JSON: %s\n", cJSON_Print(json));
 
 		//check json
-		if (json == NULL || !cJSON_IsObject(json)){
+		if (!cJSON_IsObject(json)){
 			if (d->callback)
-				d->callback(0, user_data, STR("can't get json from timestamp: %ld for %s: %s", d->timestamp, d->tablename, d->uuid));
+				d->callback(0, d->user_data, STR("can't get json from timestamp: %ld for %s: %s", d->timestamp, d->tablename, d->uuid));
 			return 1;
 		}
+
 
 		cJSON * item  = cJSON_GetArrayItem(json, 0);
 		
@@ -293,6 +299,10 @@ int sqlite2yandexdisk_update_from_cloud_callback(size_t size, void *data, void *
 
 		//delete JSON
 		cJSON_Delete(json);
+
+		//free user_data
+		if (user_data)
+			free(user_data);
 	}
 
 	return 0;
@@ -364,9 +374,6 @@ sqlite2yandexdisk_update_from_cloud(
 	d->callback = callback;
 	d->user_data = user_data;
 	d->timestamp = max;
-	/*d->database = database;*/
-	/*d->tablename = tablename;*/
-	/*d->uuid = uuid;*/
 	strcpy(d->database,database);
 	strcpy(d->tablename, tablename);
 	strcpy(d->uuid, uuid);
