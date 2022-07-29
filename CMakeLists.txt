@@ -24,7 +24,7 @@ add_subdirectory(SQLiteConnect)
 add_subdirectory(cYandexDisk)
 
 add_library(${TARGET} STATIC 
-	${TARGET}.c
+	upload.c
 	update_from_cloud.c
 )
 target_link_libraries(${TARGET} 
