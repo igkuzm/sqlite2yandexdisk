@@ -2,7 +2,7 @@
  * File              : update_from_cloud.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 29.07.2022
- * Last Modified Date: 29.07.2022
+ * Last Modified Date: 30.07.2022
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -73,19 +73,17 @@ int update_from_cloud_callback(size_t size, void *data, void *user_data, char *e
 	
 
 	if (size){
-		//const char *err;
-		//cJSON * json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
+		const char *err;
+		cJSON * json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
 		
-		//if (err)
-			//if(t->callback)
-				//t->callback(0, t->user_data, STR("cJSON_Parse error: %s", err));		
+		if (err)
+			if(t->callback)
+				t->callback(0, t->user_data, STR("cJSON_Parse error: %s", err));
 		
-		cJSON * json = cJSON_Parse(data);
-
-		printf("JSON: %s\n", cJSON_Print(json));
+		//cJSON * json = cJSON_Parse(data);
 
 		//check json
-		if (!cJSON_IsObject(json)){
+		if (!json || !cJSON_IsObject(json)){
 			if (t->callback)
 				t->callback(0, t->user_data, STR("can't get json from timestamp: %ld for %s: %s", t->timestamp, t->tablename, t->uuid));
 			return 1;
@@ -128,7 +126,6 @@ int update_from_cloud_callback(size_t size, void *data, void *user_data, char *e
 					sqlite_connect_execute(SQL, t->database);
 					free(SQL);
 				}
-
 			}
 			//do cicle
 			struct columns_list_t * ptr = list;
@@ -139,6 +136,9 @@ int update_from_cloud_callback(size_t size, void *data, void *user_data, char *e
 
 		//delete JSON
 		cJSON_Delete(json);
+		
+		//make callback		
+		t->callback(size, t->user_data, NULL);
 
 		//free user_data
 		if (user_data)
