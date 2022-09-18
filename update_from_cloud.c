@@ -87,7 +87,7 @@ int update_from_cloud_callback(size_t size, void *data, void *user_data, char *e
 		cJSON * json = cJSON_Parse(data);
 
 		//check json
-		if (!json || !cJSON_IsObject(json)){
+		if (!cJSON_IsObject(json)){
 			if (t->callback)
 				t->callback(0, t->user_data, STR("can't get json from timestamp: %ld for %s: %s", t->timestamp, t->tablename, t->uuid));
 			return 1;
