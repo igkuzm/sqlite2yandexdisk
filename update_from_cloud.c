@@ -67,9 +67,11 @@ int columns_list_callback(void *user_data, int argc, char **argv, char **titles)
 int update_from_cloud_callback(size_t size, void *data, void *user_data, char *error){			
 	struct update_from_cloud_t *t = user_data;
 	
-	if (error)
+	if (error){
 		if(t->callback)
 			t->callback(0, t->user_data, STR("%s", error));
+		return 1;
+	}
 	
 
 	if (size){
