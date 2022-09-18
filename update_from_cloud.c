@@ -78,7 +78,7 @@ int update_from_cloud_callback(size_t size, void *data, void *user_data, char *e
 		const char *err;
 		cJSON * json = cJSON_ParseWithLengthOpts((const char *)data, size, &err, 0);
 		
-		if (err != 0){
+		if (err == 0){
 			if(t->callback)
 				t->callback(0, t->user_data, STR("cJSON_Parse error: %s", err));
 			return 1;
