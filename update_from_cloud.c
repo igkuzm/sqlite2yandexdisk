@@ -2,7 +2,7 @@
  * File              : update_from_cloud.c
  * Author            : Igor V. Sementsov <ig.kuzm@gmail.com>
  * Date              : 29.07.2022
- * Last Modified Date: 30.07.2022
+ * Last Modified Date: 18.09.2022
  * Last Modified By  : Igor V. Sementsov <ig.kuzm@gmail.com>
  */
 
@@ -180,10 +180,11 @@ struct timestamps_callback_t{
 
 int timestamps_callback(c_yd_file_t *file, void *user_data, char *error){
 	struct timestamps_callback_t * t = user_data;
-	if (error)
+	if (error){
 		if(t->callback)
 			t->callback(0, t->user_data, STR("%s", error));
-	
+		return 0;
+	}
 	time_t timestamp = atol(file->name);
 	timestamp_array_append(t->timestamps, timestamp);
 
